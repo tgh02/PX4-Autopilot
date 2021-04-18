@@ -627,8 +627,7 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 	
 	// SIPIC
 	_att_control = rates_p_scaled.emult(rates_err) +
-		       _rates_int +
-			rates_k1_scaled.emult(rates_err) -
+			rates_k1_scaled.emult(_rates_int) -
 			rates_k2_scaled.emult(rates) - 
 		       rates_d_scaled.emult(rates_filtered - _rates_prev_filtered) / dt +
 		       _rate_ff.emult(_rates_sp);
