@@ -134,12 +134,21 @@ MulticopterAttitudeControl::parameters_updated()
 	// Store some of the parameters in a more convenient way & precompute often-used values
 	_attitude_control.setProportionalGain(Vector3f(_param_mc_roll_p.get(), _param_mc_pitch_p.get(), _param_mc_yaw_p.get()));
 
-	// rate gains
+	// rate gain 
+	// SIPIC
 	_rate_p = Vector3f(_param_mc_rollrate_p.get(), _param_mc_pitchrate_p.get(), _param_mc_yawrate_p.get());
-	_rate_i = Vector3f(_param_mc_rollrate_i.get(), _param_mc_pitchrate_i.get(), _param_mc_yawrate_i.get());
+	_rate_k1 = Vector3f(_param_mc_rollrate_p.get() * _param_mc_rollrate_i.get(), _param_mc_pitchrate_p.get() * _param_mc_pitchrate_i.get(), _param_mc_yawrate_p.get() * _param_mc_yawrate_i.get());
+	_rate_k2 = Vector3f(_param_mc_rollrate_i.get() * _param_mc_roll_jm.get(), _param_mc_pitchrate_i.get() * _param_mc_pitch_jm.get(), _param_mc_yawrate_i.get() * _param_mc_yaw_jm.get());
 	_rate_int_lim = Vector3f(_param_mc_rr_int_lim.get(), _param_mc_pr_int_lim.get(), _param_mc_yr_int_lim.get());
 	_rate_d = Vector3f(_param_mc_rollrate_d.get(), _param_mc_pitchrate_d.get(), _param_mc_yawrate_d.get());
 	_rate_ff = Vector3f(_param_mc_rollrate_ff.get(), _param_mc_pitchrate_ff.get(), _param_mc_yawrate_ff.get());
+	
+	// Original PID
+	//_rate_p = Vector3f(_param_mc_rollrate_p.get(), _param_mc_pitchrate_p.get(), _param_mc_yawrate_p.get());
+	//_rate_i = Vector3f(_param_mc_rollrate_i.get(), _param_mc_pitchrate_i.get(), _param_mc_yawrate_i.get());
+	//_rate_int_lim = Vector3f(_param_mc_rr_int_lim.get(), _param_mc_pr_int_lim.get(), _param_mc_yr_int_lim.get());
+	//_rate_d = Vector3f(_param_mc_rollrate_d.get(), _param_mc_pitchrate_d.get(), _param_mc_yawrate_d.get());
+	//_rate_ff = Vector3f(_param_mc_rollrate_ff.get(), _param_mc_pitchrate_ff.get(), _param_mc_yawrate_ff.get());
 
 	if (fabsf(_lp_filters_d.get_cutoff_freq() - _param_mc_dterm_cutoff.get()) > 0.01f) {
 		_lp_filters_d.set_cutoff_frequency(_loop_update_rate_hz, _param_mc_dterm_cutoff.get());
@@ -598,21 +607,37 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 	rates(0) -= _sensor_bias.gyro_x_bias;
 	rates(1) -= _sensor_bias.gyro_y_bias;
 	rates(2) -= _sensor_bias.gyro_z_bias;
-
+	
+	// SIPIC
 	Vector3f rates_p_scaled = _rate_p.emult(pid_attenuations(_param_mc_tpa_break_p.get(), _param_mc_tpa_rate_p.get()));
-	Vector3f rates_i_scaled = _rate_i.emult(pid_attenuations(_param_mc_tpa_break_i.get(), _param_mc_tpa_rate_i.get()));
+	Vector3f rates_k1_scaled = _rate_k1.emult(pid_attenuations(_param_mc_tpa_break_k1.get(), _param_mc_tpa_rate_k1.get()));
+	Vector3f rates_k2_scaled = _rate_k2.emult(pid_attenuations(_param_mc_tpa_break_k2.get(), _param_mc_tpa_rate_k2.get()));
 	Vector3f rates_d_scaled = _rate_d.emult(pid_attenuations(_param_mc_tpa_break_d.get(), _param_mc_tpa_rate_d.get()));
+	
+	// Origianl PID
+	// Vector3f rates_p_scaled = _rate_p.emult(pid_attenuations(_param_mc_tpa_break_p.get(), _param_mc_tpa_rate_p.get()));
+	// Vector3f rates_i_scaled = _rate_i.emult(pid_attenuations(_param_mc_tpa_break_i.get(), _param_mc_tpa_rate_i.get()));
+	// Vector3f rates_d_scaled = _rate_d.emult(pid_attenuations(_param_mc_tpa_break_d.get(), _param_mc_tpa_rate_d.get()));
 
 	/* angular rates error */
 	Vector3f rates_err = _rates_sp - rates;
 
 	/* apply low-pass filtering to the rates for D-term */
 	Vector3f rates_filtered(_lp_filters_d.apply(rates));
-
+	
+	// SIPIC
 	_att_control = rates_p_scaled.emult(rates_err) +
-		       _rates_int -
+		       _rates_int +
+			rates_k1_scaled.emult(rates_err) -
+			rates_k2_scaled.emult(rates) - 
 		       rates_d_scaled.emult(rates_filtered - _rates_prev_filtered) / dt +
 		       _rate_ff.emult(_rates_sp);
+	
+	// Original PID
+	// _att_control = rates_p_scaled.emult(rates_err) +
+	//	       _rates_int -
+	//	       rates_d_scaled.emult(rates_filtered - _rates_prev_filtered) / dt +
+	//	       _rate_ff.emult(_rates_sp);
 
 	_rates_prev = rates;
 	_rates_prev_filtered = rates_filtered;
@@ -654,7 +679,11 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 			i_factor = math::max(0.0f, 1.f - i_factor * i_factor);
 
 			// Perform the integration using a first order method and do not propagate the result if out of range or invalid
-			float rate_i = _rates_int(i) + i_factor * rates_i_scaled(i) * rates_err(i) * dt;
+			// SIPIC
+			float rate_i = _rates_int(i) + i_factor * rates_k1_scaled(i) * rates_err(i) * dt;
+			
+			// Original PID
+			// float rate_i = _rates_int(i) + i_factor * rates_i_scaled(i) * rates_err(i) * dt;
 
 			if (PX4_ISFINITE(rate_i) && rate_i > -_rate_int_lim(i) && rate_i < _rate_int_lim(i)) {
 				_rates_int(i) = rate_i;
