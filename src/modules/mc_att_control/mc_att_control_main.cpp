@@ -137,6 +137,7 @@ MulticopterAttitudeControl::parameters_updated()
 	// rate gain 
 	// SIPIC
 	_rate_p = Vector3f(_param_mc_rollrate_p.get(), _param_mc_pitchrate_p.get(), _param_mc_yawrate_p.get());
+	_rate_i = Vector3f(_param_mc_rollrate_i.get(), _param_mc_pitchrate_i.get(), _param_mc_yawrate_i.get());
 	_rate_k1 = Vector3f(_param_mc_rollrate_p.get() * _param_mc_rollrate_i.get(), _param_mc_pitchrate_p.get() * _param_mc_pitchrate_i.get(), _param_mc_yawrate_p.get() * _param_mc_yawrate_i.get());
 	_rate_k2 = Vector3f(_param_mc_rollrate_i.get() * _param_mc_roll_jm.get(), _param_mc_pitchrate_i.get() * _param_mc_pitch_jm.get(), _param_mc_yawrate_i.get() * _param_mc_yaw_jm.get());
 	_rate_int_lim = Vector3f(_param_mc_rr_int_lim.get(), _param_mc_pr_int_lim.get(), _param_mc_yr_int_lim.get());
