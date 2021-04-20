@@ -247,11 +247,7 @@ private:
 		(ParamFloat<px4::params::MC_TPA_RATE_P>) _param_mc_tpa_rate_p,				/**< Throttle PID Attenuation slope */
 		(ParamFloat<px4::params::MC_TPA_RATE_I>) _param_mc_tpa_rate_i,				/**< Throttle PID Attenuation slope */
 		(ParamFloat<px4::params::MC_TPA_RATE_D>) _param_mc_tpa_rate_d,				/**< Throttle PID Attenuation slope */
-		(ParamFloat<px4::params::MC_TPA_BREAK_K1>) _param_mc_tpa_break_k1,		// SIPIC
-		(ParamFloat<px4::params::MC_TPA_BREAK_K2>) _param_mc_tpa_break_k2,		// SIPIC		
-		(ParamFloat<px4::params::MC_TPA_RATE_K1>) _param_mc_tpa_rate_k1,		// SIPIC
-		(ParamFloat<px4::params::MC_TPA_RATE_K2>) _param_mc_tpa_rate_k2, 		// SIPIC
-
+		
 		(ParamFloat<px4::params::MC_ROLLRATE_MAX>) _param_mc_rollrate_max,
 		(ParamFloat<px4::params::MC_PITCHRATE_MAX>) _param_mc_pitchrate_max,
 		(ParamFloat<px4::params::MC_YAWRATE_MAX>) _param_mc_yawrate_max,
