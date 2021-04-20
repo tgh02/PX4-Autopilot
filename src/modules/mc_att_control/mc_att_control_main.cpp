@@ -611,8 +611,8 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 	
 	// SIPIC
 	Vector3f rates_p_scaled = _rate_p.emult(pid_attenuations(_param_mc_tpa_break_p.get(), _param_mc_tpa_rate_p.get()));
-	Vector3f rates_k1_scaled = _rate_k1.emult(pid_attenuations(_param_mc_tpa_break_k1.get(), _param_mc_tpa_rate_k1.get()));
-	Vector3f rates_k2_scaled = _rate_k2.emult(pid_attenuations(_param_mc_tpa_break_k2.get(), _param_mc_tpa_rate_k2.get()));
+	Vector3f rates_k1_scaled = _rate_k1.emult(pid_attenuations(_param_mc_tpa_break_i.get(), _param_mc_tpa_rate_i.get()));
+	Vector3f rates_k2_scaled = _rate_k2.emult(pid_attenuations(_param_mc_tpa_break_i.get(), _param_mc_tpa_rate_i.get()));
 	Vector3f rates_d_scaled = _rate_d.emult(pid_attenuations(_param_mc_tpa_break_d.get(), _param_mc_tpa_rate_d.get()));
 	
 	// Origianl PID
