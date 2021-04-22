@@ -222,8 +222,7 @@ private:
 		(ParamFloat<px4::params::MC_ROLLRATE_D>) _param_mc_rollrate_d,
 		(ParamFloat<px4::params::MC_ROLLRATE_FF>) _param_mc_rollrate_ff,
 		(ParamFloat<px4::params::MC_ROLL_JM>) _param_mc_roll_jm,			// SIPIC
-		(ParamFloat<px4::params::MC_ROLL_KU>) _param_mc_roll_ku,			// SIPIC
-			
+				
 		(ParamFloat<px4::params::MC_PITCH_P>) _param_mc_pitch_p,
 		(ParamFloat<px4::params::MC_PITCHRATE_P>) _param_mc_pitchrate_p,
 		(ParamFloat<px4::params::MC_PITCHRATE_I>) _param_mc_pitchrate_i,
@@ -231,8 +230,7 @@ private:
 		(ParamFloat<px4::params::MC_PITCHRATE_D>) _param_mc_pitchrate_d,
 		(ParamFloat<px4::params::MC_PITCHRATE_FF>) _param_mc_pitchrate_ff,
 		(ParamFloat<px4::params::MC_PITCH_JM>) _param_mc_pitch_jm,			// SIPIC
-		(ParamFloat<px4::params::MC_PITCH_KU>) _param_mc_pitch_ku,			// SIPIC
-
+		
 		(ParamFloat<px4::params::MC_YAW_P>) _param_mc_yaw_p,
 		(ParamFloat<px4::params::MC_YAWRATE_P>) _param_mc_yawrate_p,
 		(ParamFloat<px4::params::MC_YAWRATE_I>) _param_mc_yawrate_i,
@@ -240,8 +238,7 @@ private:
 		(ParamFloat<px4::params::MC_YAWRATE_D>) _param_mc_yawrate_d,
 		(ParamFloat<px4::params::MC_YAWRATE_FF>) _param_mc_yawrate_ff,
 		(ParamFloat<px4::params::MC_YAW_JM>) _param_mc_yaw_jm,				// SIPIC
-		(ParamFloat<px4::params::MC_YAW_KU>) _param_mc_yaw_ku,			// SIPIC
-
+		
 		(ParamFloat<px4::params::MC_DTERM_CUTOFF>) _param_mc_dterm_cutoff,			/**< Cutoff frequency for the D-term filter */
 
 		(ParamFloat<px4::params::MC_TPA_BREAK_P>) _param_mc_tpa_break_p,			/**< Throttle PID Attenuation breakpoint */
