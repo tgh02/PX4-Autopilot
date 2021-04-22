@@ -222,6 +222,7 @@ private:
 		(ParamFloat<px4::params::MC_ROLLRATE_D>) _param_mc_rollrate_d,
 		(ParamFloat<px4::params::MC_ROLLRATE_FF>) _param_mc_rollrate_ff,
 		(ParamFloat<px4::params::MC_ROLL_JM>) _param_mc_roll_jm,			// SIPIC
+		(ParamFloat<px4::params::MC_ROLL_KU>) _param_mc_roll_ku,			// SIPIC
 			
 		(ParamFloat<px4::params::MC_PITCH_P>) _param_mc_pitch_p,
 		(ParamFloat<px4::params::MC_PITCHRATE_P>) _param_mc_pitchrate_p,
@@ -230,6 +231,7 @@ private:
 		(ParamFloat<px4::params::MC_PITCHRATE_D>) _param_mc_pitchrate_d,
 		(ParamFloat<px4::params::MC_PITCHRATE_FF>) _param_mc_pitchrate_ff,
 		(ParamFloat<px4::params::MC_PITCH_JM>) _param_mc_pitch_jm,			// SIPIC
+		(ParamFloat<px4::params::MC_PITCH_KU>) _param_mc_pitch_ku,			// SIPIC
 
 		(ParamFloat<px4::params::MC_YAW_P>) _param_mc_yaw_p,
 		(ParamFloat<px4::params::MC_YAWRATE_P>) _param_mc_yawrate_p,
@@ -238,6 +240,7 @@ private:
 		(ParamFloat<px4::params::MC_YAWRATE_D>) _param_mc_yawrate_d,
 		(ParamFloat<px4::params::MC_YAWRATE_FF>) _param_mc_yawrate_ff,
 		(ParamFloat<px4::params::MC_YAW_JM>) _param_mc_yaw_jm,				// SIPIC
+		(ParamFloat<px4::params::MC_YAW_KU>) _param_mc_yaw_ku,			// SIPIC
 
 		(ParamFloat<px4::params::MC_DTERM_CUTOFF>) _param_mc_dterm_cutoff,			/**< Cutoff frequency for the D-term filter */
 
@@ -291,6 +294,7 @@ private:
 	matrix::Vector3f _rate_ff;		/**< Feedforward gain for desired rates */
 	matrix::Vector3f _rate_k1;		// SIPIC
 	matrix::Vector3f _rate_k2;		// SIPIC
+	matrix::Vector3f _rate_ku;		// SIPIC-Inverse matrix
 
 	matrix::Vector3f _acro_rate_max;	/**< max attitude rates in acro mode */
 	float _man_tilt_max;			/**< maximum tilt allowed for manual flight [rad] */
