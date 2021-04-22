@@ -146,11 +146,11 @@ MulticopterAttitudeControl::parameters_updated()
 	_rate_ff = Vector3f(_param_mc_rollrate_ff.get(), _param_mc_pitchrate_ff.get(), _param_mc_yawrate_ff.get());
 
 	// Inverse dynamics matrix to get rotor velocities from control inputs
-	_rate_ku = Vector3f(1/_param_mc_rollrate_ku.get(), 1/_param_mc_pitchrate_ku.get(), 1/_param_mc_yawrate_ku.get());
+	//_rate_ku = Vector3f(1/_param_mc_rollrate_ku.get(), 1/_param_mc_pitchrate_ku.get(), 1/_param_mc_yawrate_ku.get());
 
 	// inverse dynamics
-	_rate_ku = Vector3f(1/2/Cfr/1000/xr, 1/2/Cfp/1000/xp, 1/2/Cfy/1000)
-
+	_rate_ku = Vector3f(1/2/0.02156/1000/0.42, 1/2/0.02156/1000/0.42, 1/2/0.003028/1000);
+	// _rate_ku = Vector3f(1/2/Cfr/1000/xr, 1/2/Cfp/1000/xp, 1/2/Cfy/1000)
 
 	// Original PID
 	//_rate_p = Vector3f(_param_mc_rollrate_p.get(), _param_mc_pitchrate_p.get(), _param_mc_yawrate_p.get());
@@ -640,7 +640,6 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 			_rates_int -
 			rates_k2_scaled.emult(rates)
 			);
-
 
 	// SIPIC
 	/* _att_control = _rate_ku.emult( */
