@@ -31,6 +31,7 @@
  *
  ****************************************************************************/
 
+
 /**
  * @file mc_att_control_main.cpp
  * Multicopter attitude controller.
@@ -134,7 +135,7 @@ MulticopterAttitudeControl::parameters_updated()
 	// Store some of the parameters in a more convenient way & precompute often-used values
 	_attitude_control.setProportionalGain(Vector3f(_param_mc_roll_p.get(), _param_mc_pitch_p.get(), _param_mc_yaw_p.get()));
 
-	// rate gain 
+	// rate gain
 	// SIPIC
 	_rate_p = Vector3f(_param_mc_rollrate_p.get(), _param_mc_pitchrate_p.get(), _param_mc_yawrate_p.get());
 	_rate_i = Vector3f(_param_mc_rollrate_i.get(), _param_mc_pitchrate_i.get(), _param_mc_yawrate_i.get());
@@ -143,10 +144,14 @@ MulticopterAttitudeControl::parameters_updated()
 	_rate_int_lim = Vector3f(_param_mc_rr_int_lim.get(), _param_mc_pr_int_lim.get(), _param_mc_yr_int_lim.get());
 	_rate_d = Vector3f(_param_mc_rollrate_d.get(), _param_mc_pitchrate_d.get(), _param_mc_yawrate_d.get());
 	_rate_ff = Vector3f(_param_mc_rollrate_ff.get(), _param_mc_pitchrate_ff.get(), _param_mc_yawrate_ff.get());
-	
+
 	// Inverse dynamics matrix to get rotor velocities from control inputs
-	_rate_ku = Vector3f(1/_param_mc_rollrate_ku.get(), 1/_param_mc_pitchrate_ku.get(), 1/_param_mc_yawrate_ku.get());	
-	
+	_rate_ku = Vector3f(1/_param_mc_rollrate_ku.get(), 1/_param_mc_pitchrate_ku.get(), 1/_param_mc_yawrate_ku.get());
+
+	// inverse dynamics
+	_rate_ku = Vector3f(1/2/Cfr/1000/xr, 1/2/Cfp/1000/xp, 1/2/Cfy/1000)
+
+
 	// Original PID
 	//_rate_p = Vector3f(_param_mc_rollrate_p.get(), _param_mc_pitchrate_p.get(), _param_mc_yawrate_p.get());
 	//_rate_i = Vector3f(_param_mc_rollrate_i.get(), _param_mc_pitchrate_i.get(), _param_mc_yawrate_i.get());
@@ -611,13 +616,13 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 	rates(0) -= _sensor_bias.gyro_x_bias;
 	rates(1) -= _sensor_bias.gyro_y_bias;
 	rates(2) -= _sensor_bias.gyro_z_bias;
-	
+
 	// SIPIC
 	Vector3f rates_p_scaled = _rate_p.emult(pid_attenuations(_param_mc_tpa_break_p.get(), _param_mc_tpa_rate_p.get()));
-	Vector3f rates_k1_scaled = _rate_k1.emult(pid_attenuations(_param_mc_tpa_break_i.get(), _param_mc_tpa_rate_i.get()));
-	Vector3f rates_k2_scaled = _rate_k2.emult(pid_attenuations(_param_mc_tpa_break_i.get(), _param_mc_tpa_rate_i.get()));
+	Vector3f rates_k1_scaled = _rate_k1;
+	Vector3f rates_k2_scaled = _rate_k2;
 	Vector3f rates_d_scaled = _rate_d.emult(pid_attenuations(_param_mc_tpa_break_d.get(), _param_mc_tpa_rate_d.get()));
-	
+
 	// Origianl PID
 	// Vector3f rates_p_scaled = _rate_p.emult(pid_attenuations(_param_mc_tpa_break_p.get(), _param_mc_tpa_rate_p.get()));
 	// Vector3f rates_i_scaled = _rate_i.emult(pid_attenuations(_param_mc_tpa_break_i.get(), _param_mc_tpa_rate_i.get()));
@@ -628,16 +633,24 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 
 	/* apply low-pass filtering to the rates for D-term */
 	Vector3f rates_filtered(_lp_filters_d.apply(rates));
-	
+
 	// SIPIC
 	_att_control = _rate_ku.emult(
 			rates_p_scaled.emult(rates_err) +
 			_rates_int -
-			rates_k2_scaled.emult(rates) - 
-		       rates_d_scaled.emult(rates_filtered - _rates_prev_filtered) / dt +
-		       _rate_ff.emult(_rates_sp)
+			rates_k2_scaled.emult(rates)
 			);
-	
+
+
+	// SIPIC
+	/* _att_control = _rate_ku.emult( */
+	/* 		rates_p_scaled.emult(rates_err) + */
+	/* 		_rates_int - */
+	/* 		rates_k2_scaled.emult(rates) - */
+	/* 	       rates_d_scaled.emult(rates_filtered - _rates_prev_filtered) / dt + */
+	/* 	       _rate_ff.emult(_rates_sp) */
+	/* 		); */
+
 	// Original PID
 	// _att_control = rates_p_scaled.emult(rates_err) +
 	//	       _rates_int -
@@ -686,7 +699,7 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 			// Perform the integration using a first order method and do not propagate the result if out of range or invalid
 			// SIPIC
 			float rate_i = _rates_int(i) + i_factor * rates_k1_scaled(i) * rates_err(i) * dt;
-			
+
 			// Original PID
 			// float rate_i = _rates_int(i) + i_factor * rates_i_scaled(i) * rates_err(i) * dt;
 
