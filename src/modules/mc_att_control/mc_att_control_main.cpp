@@ -641,7 +641,12 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 			rates_k2_scaled.emult(rates)
 			);
 
-	// SIPIC
+	// Original PID
+	// _att_control = rates_p_scaled.emult(rates_err) +
+	//	       _rates_int -
+	//	       rates_d_scaled.emult(rates_filtered - _rates_prev_filtered) / dt +
+	//	       _rate_ff.emult(_rates_sp);// SIPIC
+	
 	/* _att_control = _rate_ku.emult( */
 	/* 		rates_p_scaled.emult(rates_err) + */
 	/* 		_rates_int - */
@@ -649,12 +654,6 @@ MulticopterAttitudeControl::control_attitude_rates(float dt)
 	/* 	       rates_d_scaled.emult(rates_filtered - _rates_prev_filtered) / dt + */
 	/* 	       _rate_ff.emult(_rates_sp) */
 	/* 		); */
-
-	// Original PID
-	// _att_control = rates_p_scaled.emult(rates_err) +
-	//	       _rates_int -
-	//	       rates_d_scaled.emult(rates_filtered - _rates_prev_filtered) / dt +
-	//	       _rate_ff.emult(_rates_sp);
 
 	_rates_prev = rates;
 	_rates_prev_filtered = rates_filtered;
