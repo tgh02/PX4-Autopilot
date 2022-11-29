@@ -89,18 +89,6 @@ using systemlib::Hysteresis;
 
 using namespace time_literals;
 
-// TODO: generate
-static constexpr bool operator ==(const actuator_armed_s &a, const actuator_armed_s &b)
-{
-	return (a.armed == b.armed &&
-		a.prearmed == b.prearmed &&
-		a.ready_to_arm == b.ready_to_arm &&
-		a.lockdown == b.lockdown &&
-		a.manual_lockdown == b.manual_lockdown &&
-		a.force_failsafe == b.force_failsafe &&
-		a.in_esc_calibration_mode == b.in_esc_calibration_mode);
-}
-
 class Commander : public ModuleBase<Commander>, public ModuleParams
 {
 public:
@@ -125,7 +113,7 @@ public:
 	/** @see ModuleBase::print_status() */
 	int print_status() override;
 
-	void enable_hil();
+	void enableHIL();
 
 private:
 
@@ -148,7 +136,7 @@ private:
 		OFFBOARD_MODE_BIT = (1 << 1)
 	};
 
-	enum VEHICLE_MODE_FLAG {
+	typedef enum VEHICLE_MODE_FLAG {
 		VEHICLE_MODE_FLAG_CUSTOM_MODE_ENABLED  = 1,   /* 0b00000001 Reserved for future use. | */
 		VEHICLE_MODE_FLAG_TEST_ENABLED         = 2,   /* 0b00000010 system has a test mode enabled. This flag is intended for temporary system tests and should not be used for stable implementations. | */
 		VEHICLE_MODE_FLAG_AUTO_ENABLED         = 4,   /* 0b00000100 autonomous mode enabled, system finds its own goal positions. Guided flag can be set or not, depends on the actual implementation. | */
@@ -157,7 +145,7 @@ private:
 		VEHICLE_MODE_FLAG_HIL_ENABLED          = 32,  /* 0b00100000 hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational. | */
 		VEHICLE_MODE_FLAG_MANUAL_INPUT_ENABLED = 64,  /* 0b01000000 remote control input is enabled. | */
 		VEHICLE_MODE_FLAG_SAFETY_ARMED         = 128, /* 0b10000000 MAV safety set to armed. Motors are enabled / running / can start. Ready to fly. Additional note: this flag is to be ignore when sent in the command MAV_CMD_DO_SET_MODE and MAV_CMD_COMPONENT_ARM_DISARM shall be used instead. The flag can still be used to report the armed state. | */
-		VEHICLE_MODE_FLAG_ENUM_END             = 129  /*  | */
+		VEHICLE_MODE_FLAG_ENUM_END             = 129, /*  | */
 	};
 
 	void answerCommand(const vehicle_command_s &cmd, const uint8_t result);
@@ -166,7 +154,7 @@ private:
 
 	transition_result_t disarm(const arm_disarm_reason_t calling_reason, const bool forced = false);
 
-	void battery_status_check();
+	void batteryStatusCheck();
 
 	void checkAndInformReadyForTakeoff();
 
@@ -207,9 +195,9 @@ private:
 
 	void landDetectorUpdate();
 
-	void manualControlCheck();
+	void manualControlUpdate();
 
-	void offboardControlCheck();
+	void offboardControlUpdate();
 
 	void printRejectMode(uint8_t nav_state);
 
@@ -295,7 +283,7 @@ private:
 	bool _avoidance_system_lost{false};
 	bool _circuit_breaker_flight_termination_disabled{false};
 
-	bool _failsafe_old{false};   
+	bool _failsafe_old{false};
 	bool _failsafe_user_override_request{false}; ///< override request due to stick movements
 	bool _flight_termination_triggered{false};
 

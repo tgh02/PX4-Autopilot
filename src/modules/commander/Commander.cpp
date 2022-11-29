@@ -72,9 +72,8 @@
 #include <uORB/topics/mavlink_log.h>
 #include <uORB/topics/tune_control.h>
 
-
 // TODO: generate
-static constexpr bool operator ==(const actuator_armed_s &a, const actuator_armed_s &b)
+static constexpr bool operator == (const actuator_armed_s &a, const actuator_armed_s &b)
 {
 	return (a.armed == b.armed &&
 		a.prearmed == b.prearmed &&
@@ -86,6 +85,43 @@ static constexpr bool operator ==(const actuator_armed_s &a, const actuator_arme
 }
 
 static_assert(sizeof(actuator_armed_s) == 16, "actuator_armed equality operator review");
+
+static constexpr const char *arm_disarm_reason_str(arm_disarm_reason_t calling_reason)
+{
+	switch (calling_reason) {
+	case arm_disarm_reason_t::transition_to_standby: return "";
+
+	case arm_disarm_reason_t::rc_stick: return "RC";
+
+	case arm_disarm_reason_t::rc_switch: return "RC (switch)";
+
+	case arm_disarm_reason_t::command_internal: return "internal command";
+
+	case arm_disarm_reason_t::command_external: return "external command";
+
+	case arm_disarm_reason_t::mission_start: return "mission start";
+
+	case arm_disarm_reason_t::auto_disarm_land: return "landing";
+
+	case arm_disarm_reason_t::auto_disarm_preflight: return "auto preflight disarming";
+
+	case arm_disarm_reason_t::kill_switch: return "kill-switch";
+
+	case arm_disarm_reason_t::lockdown: return "lockdown";
+
+	case arm_disarm_reason_t::failure_detector: return "failure detector";
+
+	case arm_disarm_reason_t::shutdown: return "shutdown request";
+
+	case arm_disarm_reason_t::unit_test: return "unit tests";
+
+	case arm_disarm_reason_t::rc_button: return "RC (button)";
+
+	case arm_disarm_reason_t::failsafe: return "failsafe";
+	}
+
+	return "";
+};
 
 #if defined(BOARD_HAS_POWER_CONTROL)
 static orb_advert_t tune_control_pub = nullptr;
@@ -219,6 +255,42 @@ static bool broadcast_vehicle_command(const uint32_t cmd, const float param1 = N
 }
 #endif
 
+Commander::Commander() :
+	ModuleParams(nullptr)
+{
+	_vehicle_land_detected.landed = true;
+
+	_vehicle_status.system_id = 1;
+	_vehicle_status.component_id = 1;
+
+	_vehicle_status.system_type = 0;
+	_vehicle_status.vehicle_type = vehicle_status_s::VEHICLE_TYPE_UNKNOWN;
+
+	_vehicle_status.nav_state = _user_mode_intention.get();
+	_vehicle_status.nav_state_user_intention = _user_mode_intention.get();
+	_vehicle_status.nav_state_timestamp = hrt_absolute_time();
+
+	/* mark all signals lost as long as they haven't been found */
+	_vehicle_status.gcs_connection_lost = true;
+
+	_vehicle_status.power_input_valid = true;
+
+	// default for vtol is rotary wing
+	_vtol_vehicle_status.vehicle_vtol_state = vtol_vehicle_status_s::VEHICLE_VTOL_STATE_MC;
+
+	_param_mav_comp_id = param_find("MAV_COMP_ID");
+	_param_mav_sys_id = param_find("MAV_SYS_ID");
+	_param_mav_type = param_find("MAV_TYPE");
+	_param_rc_map_fltmode = param_find("RC_MAP_FLTMODE");
+
+	updateParameters();
+}
+
+Commander::~Commander()
+{
+	perf_free(_loop_perf);
+	perf_free(_preflight_check_perf);
+}
 
 int Commander::custom_command(int argc, char *argv[])
 {
@@ -457,84 +529,9 @@ int Commander::custom_command(int argc, char *argv[])
 		return (ret ? 0 : 1);
 	}
 
-
 #endif
 
 	return print_usage("unknown command");
-}
-
-static constexpr const char *arm_disarm_reason_str(arm_disarm_reason_t calling_reason)
-{
-	switch (calling_reason) {
-	case arm_disarm_reason_t::transition_to_standby: return "";
-
-	case arm_disarm_reason_t::rc_stick: return "RC";
-
-	case arm_disarm_reason_t::rc_switch: return "RC (switch)";
-
-	case arm_disarm_reason_t::command_internal: return "internal command";
-
-	case arm_disarm_reason_t::command_external: return "external command";
-
-	case arm_disarm_reason_t::mission_start: return "mission start";
-
-	case arm_disarm_reason_t::auto_disarm_land: return "landing";
-
-	case arm_disarm_reason_t::auto_disarm_preflight: return "auto preflight disarming";
-
-	case arm_disarm_reason_t::kill_switch: return "kill-switch";
-
-	case arm_disarm_reason_t::lockdown: return "lockdown";
-
-	case arm_disarm_reason_t::failure_detector: return "failure detector";
-
-	case arm_disarm_reason_t::shutdown: return "shutdown request";
-
-	case arm_disarm_reason_t::unit_test: return "unit tests";
-
-	case arm_disarm_reason_t::rc_button: return "RC (button)";
-
-	case arm_disarm_reason_t::failsafe: return "failsafe";
-	}
-
-	return "";
-};
-
-Commander::Commander() :
-	ModuleParams(nullptr)
-{
-	_vehicle_land_detected.landed = true;
-
-	_vehicle_status.system_id = 1;
-	_vehicle_status.component_id = 1;
-
-	_vehicle_status.system_type = 0;
-	_vehicle_status.vehicle_type = vehicle_status_s::VEHICLE_TYPE_UNKNOWN;
-
-	_vehicle_status.nav_state = _user_mode_intention.get();
-	_vehicle_status.nav_state_user_intention = _user_mode_intention.get();
-	_vehicle_status.nav_state_timestamp = hrt_absolute_time();
-
-	/* mark all signals lost as long as they haven't been found */
-	_vehicle_status.gcs_connection_lost = true;
-
-	_vehicle_status.power_input_valid = true;
-
-	// default for vtol is rotary wing
-	_vtol_vehicle_status.vehicle_vtol_state = vtol_vehicle_status_s::VEHICLE_VTOL_STATE_MC;
-
-	_param_mav_comp_id = param_find("MAV_COMP_ID");
-	_param_mav_sys_id = param_find("MAV_SYS_ID");
-	_param_mav_type = param_find("MAV_TYPE");
-	_param_rc_map_fltmode = param_find("RC_MAP_FLTMODE");
-
-	updateParameters();
-}
-
-Commander::~Commander()
-{
-	perf_free(_loop_perf);
-	perf_free(_preflight_check_perf);
 }
 
 transition_result_t Commander::arm(arm_disarm_reason_t calling_reason, bool run_preflight_checks)
@@ -1516,7 +1513,6 @@ void Commander::executeActionRequest(const action_request_s &action_request)
 	case action_request_s::ACTION_SWITCH_MODE:
 
 		if (!_user_mode_intention.change(action_request.mode, true)) {
-
 			printRejectMode(action_request.mode);
 		}
 
@@ -1649,7 +1645,7 @@ void Commander::run()
 
 		handleAutoDisarm();
 
-		battery_status_check();
+		batteryStatusCheck();
 
 		/* If in INIT state, try to proceed to STANDBY state */
 		if (!_vehicle_status.calibration_enabled && _arm_state_machine.isInit()) {
@@ -1663,9 +1659,7 @@ void Commander::run()
 
 		checkGeofenceStatus();
 
-		manualControlCheck();
-
-		offboardControlCheck();
+		manualControlUpdate();
 
 		// data link checks which update the status
 		dataLinkCheck();
@@ -1981,6 +1975,7 @@ void Commander::checkGeofenceStatus()
 	}
 }
 
+
 bool Commander::getPrearmState() const
 {
 	switch ((PrearmedMode)_param_com_prearm_mode.get()) {
@@ -2054,7 +2049,7 @@ Commander *Commander::instantiate(int argc, char *argv[])
 
 	if (instance) {
 		if (argc >= 2 && !strcmp(argv[1], "-h")) {
-			instance->enable_hil();
+			instance->enableHIL();
 		}
 	}
 
@@ -2309,7 +2304,7 @@ bool Commander::handleModeIntentionAndFailsafe()
 
 		if (!_flight_termination_triggered) {
 			_flight_termination_triggered = true;
-			send_parachute_command();
+			sendParachuteCommand();
 		}
 
 		break;
@@ -2445,7 +2440,7 @@ void Commander::controlStatusLeds(bool changed, const uint8_t battery_warning)
 
 	_last_overload = overload;
 
-#if !defined(CONFIG_ARCH_LEDS) && defined(BOARD_HAS_controlStatusLeds)
+#if !defined(CONFIG_ARCH_LEDS) && defined(BOARD_HAS_CONTROL_STATUS_LEDS)
 
 	if (_arm_state_machine.isArmed()) {
 		if (_vehicle_status.failsafe) {
@@ -2505,7 +2500,7 @@ void Commander::updateControlMode()
 	_vehicle_control_mode_pub.publish(_vehicle_control_mode);
 }
 
-void Commander::printRejectMode(const uint8_t main_state)
+void Commander::printRejectMode(const uint8_t nav_state)
 {
 	if (hrt_elapsed_time(&_last_print_mode_reject_time) > 1_s) {
 
@@ -2744,7 +2739,7 @@ void Commander::dataLinkCheck()
 	}
 }
 
-void Commander::battery_status_check()
+void Commander::batteryStatusCheck()
 {
 	// Handle shutdown request from emergency battery action
 	if (_battery_warning != _failsafe_flags.battery_warning) {
@@ -2775,7 +2770,7 @@ void Commander::battery_status_check()
 	_battery_warning = _failsafe_flags.battery_warning;
 }
 
-void Commander::manualControlCheck()
+void Commander::manualControlUpdate()
 {
 	manual_control_setpoint_s manual_control_setpoint;
 	const bool manual_control_updated = _manual_control_setpoint_sub.update(&manual_control_setpoint);
@@ -2832,7 +2827,7 @@ void Commander::manualControlCheck()
 	}
 }
 
-void Commander::offboardControlCheck()
+void Commander::offboardControlUpdate()
 {
 	if (_offboard_control_mode_sub.update()) {
 		if (_failsafe_flags.offboard_control_signal_lost) {
@@ -2868,7 +2863,7 @@ bool Commander::shutdownIfAllowed()
 			false /* fRunPreArmChecks */, &_mavlink_log_pub, arm_disarm_reason_t::shutdown);
 }
 
-void Commander::enable_hil()
+void Commander::enableHIL()
 {
 	_vehicle_status.hil_state = vehicle_status_s::HIL_STATE_ON;
 }

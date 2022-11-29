@@ -434,16 +434,16 @@ private:
 	char _geofence_violation_warning[50];
 
 	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::NAV_LOITER_RAD>)   _param_nav_loiter_rad,   /**< loiter radius for fixedwing */
 		(ParamFloat<px4::params::NAV_ACC_RAD>)      _param_nav_acc_rad,      /**< acceptance for takeoff */
 		(ParamFloat<px4::params::NAV_FW_ALT_RAD>)   _param_nav_fw_alt_rad,   /**< acceptance rad for fixedwing alt */
 		(ParamFloat<px4::params::NAV_FW_ALTL_RAD>)  _param_nav_fw_altl_rad,  /**< acceptance rad for fw alt before landing*/
+		(ParamFloat<px4::params::NAV_LOITER_RAD>)   _param_nav_loiter_rad,   /**< loiter radius for fixedwing */
 		(ParamFloat<px4::params::NAV_MC_ALT_RAD>)   _param_nav_mc_alt_rad,   /**< acceptance rad for multicopter alt */
 		(ParamInt<px4::params::NAV_FORCE_VT>)       _param_nav_force_vt,     /**< acceptance radius for multicopter alt */
 		(ParamInt<px4::params::NAV_TRAFF_AVOID>)    _param_nav_traff_avoid,  /**< avoiding other aircraft is enabled */
 		(ParamFloat<px4::params::NAV_TRAFF_A_RADU>) _param_nav_traff_a_radu, /**< avoidance Distance Unmanned*/
 		(ParamFloat<px4::params::NAV_TRAFF_A_RADM>) _param_nav_traff_a_radm, /**< avoidance Distance Manned*/
-		(ParamFloat<px4::params::NAV_MIN_LTR_ALT>)   _param_min_ltr_alt,     /**< minimum altitude in Loiter mode*/
+		(ParamFloat<px4::params::NAV_MIN_LTR_ALT>)  _param_min_ltr_alt,      /**< minimum altitude in Loiter mode*/
 
 		// non-navigator parameters: Mission (MIS_*)
 		(ParamFloat<px4::params::MIS_PD_TO>)       _param_mis_payload_delivery_timeout,
@@ -453,5 +453,6 @@ private:
 		(ParamFloat<px4::params::MIS_YAW_ERR>)     _param_mis_yaw_err,
 		(ParamFloat<px4::params::LNDMC_ALT_MAX>)   _param_lndmc_alt_max,
 		(ParamInt<px4::params::MIS_LND_ABRT_ALT>)  _param_mis_lnd_abrt_alt
+
 	)
 };
