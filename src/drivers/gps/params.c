@@ -147,10 +147,13 @@ PARAM_DEFINE_INT32(GPS_UBX_CFG_INTF, 0);
  *
  * Heading offset angle for dual antenna GPS setups that support heading estimation.
  *
- * Set this to 0 if the antennas are parallel to the forward-facing direction of the vehicle and the rover antenna is in
- * front. The offset angle increases clockwise.
+ * Set this to 0 if the antennas are parallel to the forward-facing direction
+ * of the vehicle and the rover (or Unicore master) antenna is in front.
  *
- * Set this to 90 if the rover antenna is placed on the right side of the vehicle and the moving base antenna is on the left side.
+ * The offset angle increases clockwise.
+ *
+ * Set this to 90 if the rover (or Unicore master) antenna is placed on the
+ * right side of the vehicle and the moving base antenna is on the left side.
  *
  * @min 0
  * @max 360
