@@ -154,14 +154,15 @@ MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt,
 	// This is the formula by how much the yaw changes:
 	//   let a := tilt angle, b := atan(y/x) (direction of maximum tilt)
 	//   yaw = atan(-2 * sin(b) * cos(b) * sin^2(a/2) / (1 - 2 * cos^2(b) * sin^2(a/2))).
-	const Vector3f z_unit(0.f, 0.f, 1.f);
-	Quatf q_sp_yaw = AxisAnglef(z_unit, _man_yaw_sp);
+	Quatf q_sp_yaw(cosf(_man_yaw_sp / 2.f), 0.f, 0.f, sinf(_man_yaw_sp / 2.f));
 
 	if (_vtol) {
 		// Modify the setpoints for roll and pitch such that they reflect the user's intention even
 		// if a large yaw error(yaw_sp - yaw) is present. In the presence of a yaw error constructing
 		// an attitude setpoint from the yaw setpoint will lead to unexpected attitude behaviour from
 		// the user's view as the tilt will not be aligned with the heading of the vehicle.
+
+		const Vector3f z_unit(0.f, 0.f, 1.f);
 
 		// Extract yaw from the current attitude
 		Vector3f att_z = q.dcm_z();
@@ -174,8 +175,8 @@ MulticopterAttitudeControl::generate_attitude_setpoint(const Quatf &q, float dt,
 		Quatf q_sp_rp_compensated = q_sp_yaw.inversed() * q_yaw * q_sp_rp;
 
 		// Extract the corrected tilt as we still want to include the yaw setpoint
-		Vector3f tilt_sp = q_sp_rp_compensated.dcm_z();
-		q_sp_rp = Quatf(z_unit, tilt_sp);
+		Vector3f att_sp_z = q_sp_rp_compensated.dcm_z();
+		q_sp_rp = Quatf(z_unit, att_sp_z);
 	}
 
 	// Align the desired tilt with the yaw setpoint
