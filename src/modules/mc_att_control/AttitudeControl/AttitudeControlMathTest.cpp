@@ -54,7 +54,7 @@ TEST(AttitudeControlMath, tiltCorrectionNoError)
 	correctTiltSetpointForYawError(q_tilt_sp_ne, q, q_sp_yaw);
 
 	// THEN: the tilt setpoint is unchanged
-	EXPECT_TRUE(isEqual(q_tilt_sp_ne_before, q_tilt_sp_ne));
+	EXPECT_EQ(q_tilt_sp_ne_before, q_tilt_sp_ne);
 }
 
 TEST(AttitudeControlMath, tiltCorrectionYaw180)
@@ -71,7 +71,7 @@ TEST(AttitudeControlMath, tiltCorrectionYaw180)
 
 	// THEN: the tilt is reversed (the corrected tilt angle is the same but the axis of rotation is opposite)
 	EXPECT_FLOAT_EQ(AxisAnglef(q_tilt_sp_ne_before).angle(), AxisAnglef(q_tilt_sp_ne).angle());
-	EXPECT_TRUE(isEqual(AxisAnglef(q_tilt_sp_ne_before).axis(), -AxisAnglef(q_tilt_sp_ne).axis()));
+	EXPECT_EQ(AxisAnglef(q_tilt_sp_ne_before).axis(), -AxisAnglef(q_tilt_sp_ne).axis());
 }
 
 TEST(AttitudeControlMath, tiltCorrection)
@@ -88,5 +88,5 @@ TEST(AttitudeControlMath, tiltCorrection)
 
 	// THEN: the tilt vector obtained by rotating the corrected tilt by the yaw setpoint is the same as
 	// the one obtained by rotating the initial tilt by the current yaw of the vehicle
-	EXPECT_TRUE(isEqual((q_sp_yaw * q_tilt_sp_ne).dcm_z(), (q_yaw * q_tilt_sp_ne_before).dcm_z()));
+	EXPECT_EQ((q_sp_yaw * q_tilt_sp_ne).dcm_z(), (q_yaw * q_tilt_sp_ne_before).dcm_z());
 }

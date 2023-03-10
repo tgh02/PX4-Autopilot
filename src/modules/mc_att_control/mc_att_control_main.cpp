@@ -261,7 +261,6 @@ MulticopterAttitudeControl::Run()
 				_vtol = vehicle_status.is_vtol;
 				_vtol_in_transition_mode = vehicle_status.in_transition_mode;
 				_vtol_tailsitter = vehicle_status.is_vtol_tailsitter;
-
 			}
 		}
 
