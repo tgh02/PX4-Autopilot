@@ -316,10 +316,18 @@ float TECSControl::_calcAirspeedControlOutput(const Setpoint &setpoint, const In
 
 float TECSControl::_calcAltitudeControlOutput(const Setpoint &setpoint, const Input &input, const Param &param) const
 {
-	float altitude_rate_output;
-	altitude_rate_output = (setpoint.altitude_reference.alt - input.altitude) * param.altitude_error_gain +
-			       param.altitude_setpoint_gain_ff * setpoint.altitude_reference.alt_rate + setpoint.altitude_rate_setpoint;
-	altitude_rate_output = math::constrain(altitude_rate_output, -param.max_sink_rate, param.max_climb_rate);
+	float altitude_rate_output{0};
+
+	if (!PX4_ISFINITE(input.altitude_rate)) {
+		altitude_rate_output = (setpoint.altitude_reference.alt - input.altitude) * param.altitude_error_gain +
+				       param.altitude_setpoint_gain_ff * setpoint.altitude_reference.alt_rate + setpoint.altitude_rate_setpoint;
+		altitude_rate_output = math::constrain(altitude_rate_output, -param.max_sink_rate, param.max_climb_rate);
+
+	} else {
+		altitude_rate_output = param.altitude_setpoint_gain_ff * setpoint.altitude_reference.alt_rate +
+				       setpoint.altitude_rate_setpoint;
+		altitude_rate_output = math::constrain(altitude_rate_output, -param.max_sink_rate, param.max_climb_rate);
+	}
 
 	return altitude_rate_output;
 }
