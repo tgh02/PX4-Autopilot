@@ -1147,10 +1147,7 @@ FixedwingPositionControl::control_auto_velocity(const float control_interval, co
 	Vector2f target_velocity{pos_sp_curr.vx, pos_sp_curr.vy};
 	_target_bearing = wrap_pi(atan2f(target_velocity(1), target_velocity(0)));
 
-	float adapted_target_airspeed = target_velocity.norm() >  _param_fw_airspd_min.get() ? target_velocity.norm() :
-					_param_fw_airspd_min.get();
-
-	float target_airspeed = adapt_airspeed_setpoint(control_interval, adapted_target_airspeed,
+	float target_airspeed = adapt_airspeed_setpoint(control_interval, target_velocity.norm(),
 				_param_fw_airspd_min.get(), ground_speed);
 
 	Vector2f curr_pos_local{_local_pos.x, _local_pos.y};
