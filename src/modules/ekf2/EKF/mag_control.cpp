@@ -261,34 +261,32 @@ bool Ekf::magReset()
 	    && (_mag_counter > 1) // mag LPF available
 	   ) {
 
-		resetQuatStateYaw(_yawEstimator.getYaw(), _yawEstimator.getYawVar());
+		if (resetYawToEKFGSF()) {
+			// if world magnetic model (inclination, declination, strength) available then use it to reset mag states
+			if (PX4_ISFINITE(_mag_inclination_gps) && PX4_ISFINITE(_mag_declination_gps) && PX4_ISFINITE(_mag_strength_gps)) {
+				// use predicted earth field to reset states
+				const Vector3f mag_earth_pred = Dcmf(Eulerf(0, -_mag_inclination_gps, _mag_declination_gps)) * Vector3f(_mag_strength_gps, 0, 0);
+				_state.mag_I = mag_earth_pred;
 
-		_information_events.flags.yaw_aligned_to_imu_gps = true;
+				const Dcmf R_to_body = quatToInverseRotMat(_state.quat_nominal);
+				_state.mag_B = _mag_lpf.getState() - (R_to_body * mag_earth_pred);
 
-		// if world magnetic model (inclination, declination, strength) available then use it to reset mag states
-		if (PX4_ISFINITE(_mag_inclination_gps) && PX4_ISFINITE(_mag_declination_gps) && PX4_ISFINITE(_mag_strength_gps)) {
-			// use predicted earth field to reset states
-			const Vector3f mag_earth_pred = Dcmf(Eulerf(0, -_mag_inclination_gps, _mag_declination_gps)) * Vector3f(_mag_strength_gps, 0, 0);
-			_state.mag_I = mag_earth_pred;
+			} else {
+				// Use the last magnetometer measurements to reset the field states
+				// calculate initial earth magnetic field states
+				_state.mag_I = _R_to_earth * _mag_lpf.getState();
+				_state.mag_B.zero();
+			}
 
-			const Dcmf R_to_body = quatToInverseRotMat(_state.quat_nominal);
-			_state.mag_B = _mag_lpf.getState() - (R_to_body * mag_earth_pred);
+			ECL_DEBUG("resetting mag I: [%.3f, %.3f, %.3f], B: [%.3f, %.3f, %.3f]",
+				(double)_state.mag_I(0), (double)_state.mag_I(1), (double)_state.mag_I(2),
+				(double)_state.mag_B(0), (double)_state.mag_B(1), (double)_state.mag_B(2)
+				);
 
-		} else {
-			// Use the last magnetometer measurements to reset the field states
-			// calculate initial earth magnetic field states
-			_state.mag_I = _R_to_earth * _mag_lpf.getState();
-			_state.mag_B.zero();
+			resetMagCov();
+
+			has_realigned_yaw = true;
 		}
-
-		ECL_DEBUG("resetting mag I: [%.3f, %.3f, %.3f], B: [%.3f, %.3f, %.3f]",
-			(double)_state.mag_I(0), (double)_state.mag_I(1), (double)_state.mag_I(2),
-			(double)_state.mag_B(0), (double)_state.mag_B(1), (double)_state.mag_B(2)
-			);
-
-		resetMagCov();
-
-		has_realigned_yaw = true;
 	}
 
 	if (!has_realigned_yaw) {
