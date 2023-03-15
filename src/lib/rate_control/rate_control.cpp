@@ -73,34 +73,37 @@ Vector3f RateControl::update(const Vector3f &rate, const Vector3f &rate_sp, cons
 
 void RateControl::updateIntegral(Vector3f &rate_error, const float dt)
 {
-	for (int i = 0; i < 3; i++) {
-		// prevent further positive control saturation
-		if (_control_allocator_saturation_positive(i)) {
-			rate_error(i) = math::min(rate_error(i), 0.f);
-		}
+    for (int i = 0; i < 3; i++) {
+        // prevent further positive control saturation
+        if (_control_allocator_saturation_positive(i)) {
+            rate_error(i) = math::min(rate_error(i), 0.f);
+        }
 
-		// prevent further negative control saturation
-		if (_control_allocator_saturation_negative(i)) {
-			rate_error(i) = math::max(rate_error(i), 0.f);
-		}
+        // prevent further negative control saturation
+        if (_control_allocator_saturation_negative(i)) {
+            rate_error(i) = math::max(rate_error(i), 0.f);
+        }
 
-		// I term factor: reduce the I gain with increasing rate error.
-		// This counteracts a non-linear effect where the integral builds up quickly upon a large setpoint
-		// change (noticeable in a bounce-back effect after a flip).
-		// The formula leads to a gradual decrease w/o steps, while only affecting the cases where it should:
-		// with the parameter set to 400 degrees, up to 100 deg rate error, i_factor is almost 1 (having no effect),
-		// and up to 200 deg error leads to <25% reduction of I.
-		float i_factor = rate_error(i) / math::radians(400.f);
-		i_factor = math::max(0.0f, 1.f - i_factor * i_factor);
+        // calculate the steady-state error term
+        float ss_error = rate_error(i) / _gain_p(i);
 
-		// Perform the integration using a first order method
-		float rate_i = _rate_int(i) + i_factor * _gain_i(i) * rate_error(i) * dt;
+        // I term factor: reduce the I gain with increasing rate error.
+        // This counteracts a non-linear effect where the integral builds up quickly upon a large setpoint
+        // change (noticeable in a bounce-back effect after a flip).
+        // The formula leads to a gradual decrease w/o steps, while only affecting the cases where it should:
+        // with the parameter set to 400 degrees, up to 100 deg rate error, i_factor is almost 1 (having no effect),
+        // and up to 200 deg error leads to <25% reduction of I.
+        float i_factor = rate_error(i) / math::radians(400.f);
+        i_factor = math::max(0.0f, 1.f - i_factor * i_factor);
 
-		// do not propagate the result if out of range or invalid
-		if (PX4_ISFINITE(rate_i)) {
-			_rate_int(i) = math::constrain(rate_i, -_lim_int(i), _lim_int(i));
-		}
-	}
+        // Perform the integration using a first order method
+        float rate_i = _rate_int(i) + i_factor * (_gain_i(i) * rate_error(i) + _gain_i(i) * ss_error) * dt;
+
+        // do not propagate the result if out of range or invalid
+        if (PX4_ISFINITE(rate_i)) {
+            _rate_int(i) = math::constrain(rate_i, -_lim_int(i), _lim_int(i));
+        }
+    }
 }
 
 void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
