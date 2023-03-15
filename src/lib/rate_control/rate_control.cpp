@@ -40,35 +40,61 @@
 
 using namespace matrix;
 
-void RateControl::setGains(const Vector3f &P, const Vector3f &I, const Vector3f &D)
 {
-	_gain_p = P;
-	_gain_i = I;
-	_gain_d = D;
+public:
+    RateControlSIPIC() = default;
+    ~RateControlSIPIC() = default;
+
+    void setGains(const Vector3f &P, const Vector3f &I, const Vector3f &D, const Vector3f &FF);
+    void setSaturationStatus(const Vector<bool, 3> &saturation_positive, const Vector<bool, 3> &saturation_negative);
+
+    Vector3f update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
+        const float dt, const bool landed);
+
+private:
+    Vector3f _gain_p{0.f, 0.f, 0.f};
+    Vector3f _gain_i{0.f, 0.f, 0.f};
+    Vector3f _gain_d{0.f, 0.f, 0.f};
+    Vector3f _gain_ff{0.f, 0.f, 0.f};
+    Vector<bool, 3> _control_allocator_saturation_positive{false, false, false};
+    Vector<bool, 3> _control_allocator_saturation_negative{false, false, false};
+    Vector3f _rate_int{0.f, 0.f, 0.f};
+    Vector3f _ss_error{0.f, 0.f, 0.f};
+
+    void updateIntegral(Vector3f &rate_error, const float dt);
+};
+
+void RateControlSIPIC::setGains(const Vector3f &P, const Vector3f &I, const Vector3f &D, const Vector3f &FF)
+{
+    _gain_p = P;
+    _gain_i = I;
+    _gain_d = D;
+    _gain_ff = FF;
 }
 
-void RateControl::setSaturationStatus(const Vector<bool, 3> &saturation_positive,
-				      const Vector<bool, 3> &saturation_negative)
+void RateControlSIPIC::setSaturationStatus(const Vector<bool, 3> &saturation_positive,
+    const Vector<bool, 3> &saturation_negative)
 {
-	_control_allocator_saturation_positive = saturation_positive;
-	_control_allocator_saturation_negative = saturation_negative;
+    _control_allocator_saturation_positive = saturation_positive;
+    _control_allocator_saturation_negative = saturation_negative;
 }
 
-Vector3f RateControl::update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
-			     const float dt, const bool landed)
+Vector3f RateControlSIPIC::update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
+    const float dt, const bool landed)
 {
-	// angular rates error
-	Vector3f rate_error = rate_sp - rate;
+    // angular rates error
+    Vector3f rate_error = rate_sp - rate;
 
-	// PID control with feed forward
-	const Vector3f torque = _gain_p.emult(rate_error) + _rate_int - _gain_d.emult(angular_accel) + _gain_ff.emult(rate_sp);
+    // PID control with feedforward and steady-state error compensation
+    const Vector3f torque = _gain_p.emult(rate_error) + _gain_ff.emult(_ss_error) + _rate_int
+        - _gain_d.emult(angular_accel);
 
-	// update integral only if we are not landed
-	if (!landed) {
-		updateIntegral(rate_error, dt);
-	}
+    // update integral and steady-state error only if we are not landed
+    if (!landed) {
+        updateIntegral(rate_error, dt);
+    }
 
-	return torque;
+    return torque;
 }
 
 void RateControl::updateIntegral(Vector3f &rate_error, const float dt)
