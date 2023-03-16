@@ -36,7 +36,7 @@
 
 using namespace matrix;
 
-TEST(RateControlTest, AllZeroCase)
+TEST(SSIPControlTest, AllZeroCase)
 {
 	RateControl rate_control;
 	Vector3f torque = rate_control.update(Vector3f(), Vector3f(), Vector3f(), 0.f, false);
