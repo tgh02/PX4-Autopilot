@@ -109,6 +109,7 @@ matrix::Vector3f _gain_kp; ///< rate control proportional gain for all axes x, y
 matrix::Vector3f _gain_ki; ///< rate control integral gain
 matrix::Vector3f _lim_int; ///< integrator term maximum absolute value
 matrix::Vector3f _gain_ff; ///< direct rate to torque feed forward gain only useful for helicopters
+matrix::Vector3f _gain_ss; ///< direct rate to torque feed forward gain only useful for helicopters
 
 // States
 matrix::Vector3f _rate_int; ///< integral term of the rate controller
