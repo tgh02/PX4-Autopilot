@@ -40,82 +40,64 @@
 
 using namespace matrix;
 
-void RateControl::setGains(const Vector3f &P, const Vector3f &I, const Vector3f &D, const Vector3f &SS)
+void RateControl::setGains(const Vector3f &P, const Vector3f &I, const Vector3f &D, const Vector3f &FF)
 {
-_gain_p = P;
-_gain_i = I;
-_gain_d = D;
-_gain_ss = SS;
+    _gain_p = P;
+    _gain_i = I;
+    _gain_d = D;
+    _gain_ff = FF;
 }
 
 void RateControl::setSaturationStatus(const Vector<bool, 3> &saturation_positive,
-const Vector<bool, 3> &saturation_negative)
+                                      const Vector<bool, 3> &saturation_negative)
 {
-_control_allocator_saturation_positive = saturation_positive;
-_control_allocator_saturation_negative = saturation_negative;
+    _control_allocator_saturation_positive = saturation_positive;
+    _control_allocator_saturation_negative = saturation_negative;
 }
 
 Vector3f RateControl::update(const Vector3f &rate, const Vector3f &rate_sp, const Vector3f &angular_accel,
-const float dt, const bool landed)
+                             const float dt, const bool landed)
 {
-// angular rates error
-Vector3f rate_error = rate_sp - rate;
+    // angular rates error
+    Vector3f rate_error = rate_sp - rate;
 
-// Steady-state error term
-const Vector3f ss_error = _gain_ss.emult(rate_error);
+    // PID control with feed forward
+    const Vector3f torque = _gain_p.emult(rate_error) + _rate_int - _gain_d.emult(angular_accel) + _gain_ff.emult(rate_sp);
 
-// SSIP control with feed forward and steady-state error term
-const Vector3f torque = _gain_p.emult(rate_error)
-            + _rate_int
-            - _gain_d.emult(angular_accel)
-            + _gain_ff.emult(rate_sp)
-            + ss_error
-            - _gain_i.emult(_rate_int);
+    // update integral only if we are not landed
+    if (!landed) {
+        updateIntegral(rate_error, dt);
+    }
 
-// update integral only if we are not landed
-if (!landed) {
-    updateIntegral(rate_error, ss_error, dt);
+    return torque;
 }
 
-return torque;
-
-}
-
-void RateControl::updateIntegral(Vector3f &rate_error, Vector3f &ss_error, const float dt)
+void RateControl::updateIntegral(Vector3f &rate_error, const float dt)
 {
-for (int i = 0; i < 3; i++) {
-// prevent further positive control saturation
-if (_control_allocator_saturation_positive(i)) {
-	rate_error(i) = math::min(rate_error(i), 0.f);
-}
+    for (int i = 0; i < 3; i++) {
+        // Check if the control signal is saturated
+        bool is_saturated = false;
+        if (_control_allocator_saturation_positive(i)) {
+            is_saturated = (_rate_int(i) >= _lim_int(i));
+        } else if (_control_allocator_saturation_negative(i)) {
+            is_saturated = (_rate_int(i) <= -_lim_int(i));
+        }
 
-// prevent further negative control saturation
-if (_control_allocator_saturation_negative(i)) {
-	rate_error(i) = math::max(rate_error(i), 0.f);
-}
+        // Compute the I term factor
+        float i_factor = rate_error(i) / math::radians(400.f);
+        i_factor = math::max(0.0f, 1.f - i_factor * i_factor);
 
-// I term factor: reduce the I gain with increasing rate error.
-// This counteracts a non-linear effect where the integral builds up quickly upon a large setpoint
-// change (noticeable in a bounce-back effect after a flip).
-// The formula leads to a gradual decrease w/o steps, while only affecting the cases where it should:
-// with the parameter set to 400 degrees, up to 100 deg rate error, i_factor is almost 1 (having no effect),
-// and up to 200 deg error leads to <25% reduction of I.
-float i_factor = rate_error(i) / math::radians(400.f);
-	i_factor = math::max(0.0f, 1.f - i_factor * i_factor);
-
-// Perform the integration using a first order method
-float rate_i = _rate_int(i) + i_factor * (_gain_i(i) * rate_error(i) + _gain_i(i) * ss_error(i)) * dt;
-
-// do not propagate the result if out of range or invalid
-if (PX4_ISFINITE(rate_i)) {
-	_rate_int(i) = math::constrain(rate_i, -_lim_int(i), _lim_int(i));
-}
-}
+        // Only update the integral term if the control signal is not saturated
+        if (!is_saturated) {
+            float rate_i = _rate_int(i) + i_factor * _gain_i(i) * rate_error(i) * dt;
+            _rate_int(i) = math::constrain(rate_i, -_lim_int(i), _lim_int(i));
+        }
+    }
 }
 
 void RateControl::getRateControlStatus(rate_ctrl_status_s &rate_ctrl_status)
 {
-	rate_ctrl_status.rollspeed_integ = _rate_int(0);
-	rate_ctrl_status.pitchspeed_integ = _rate_int(1);
-	rate_ctrl_status.yawspeed_integ = _rate_int(2);
+    rate_ctrl_status.rollspeed_integ = _rate_int(0);
+    rate_ctrl_status.pitchspeed_integ = _rate_int(1);
+    rate_ctrl_status.yawspeed_integ = _rate_int(2);
 }
