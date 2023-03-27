@@ -40,11 +40,10 @@
 
 using namespace matrix;
 
-void RateControl::setGains(const Vector3f &P, const Vector3f &I, const Vector3f &D)
+void RateControl::setGains(const Vector3f &P, const Vector3f &I)
 {
 	_gain_p = P;
 	_gain_i = I;
-	_gain_d = D;
 }
 
 void RateControl::setSaturationStatus(const Vector<bool, 3> &saturation_positive,
@@ -61,7 +60,7 @@ Vector3f RateControl::update(const Vector3f &rate, const Vector3f &rate_sp, cons
 	Vector3f rate_error = rate_sp - rate;
 
 	// PID control with feed forward
-	const Vector3f torque = _gain_p.emult(rate_error) + _rate_int - _gain_d.emult(angular_accel) + _gain_ff.emult(rate_sp);
+	const Vector3f torque = _gain_p.emult(rate_error) + _rate_int + _gain_ff.emult(rate_sp);
 
 	// update integral only if we are not landed
 	if (!landed) {
