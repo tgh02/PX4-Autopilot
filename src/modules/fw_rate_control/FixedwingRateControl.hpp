@@ -180,20 +180,17 @@ private:
 		(ParamFloat<px4::params::FW_PR_I>) _param_fw_pr_i,
 		(ParamFloat<px4::params::FW_PR_IMAX>) _param_fw_pr_imax,
 		(ParamFloat<px4::params::FW_PR_P>) _param_fw_pr_p,
-		(ParamFloat<px4::params::FW_PR_D>) _param_fw_pr_d,
 
 		(ParamFloat<px4::params::FW_RLL_TO_YAW_FF>) _param_fw_rll_to_yaw_ff,
 		(ParamFloat<px4::params::FW_RR_FF>) _param_fw_rr_ff,
 		(ParamFloat<px4::params::FW_RR_I>) _param_fw_rr_i,
 		(ParamFloat<px4::params::FW_RR_IMAX>) _param_fw_rr_imax,
 		(ParamFloat<px4::params::FW_RR_P>) _param_fw_rr_p,
-		(ParamFloat<px4::params::FW_RR_D>) _param_fw_rr_d,
 
 		(ParamFloat<px4::params::FW_YR_FF>) _param_fw_yr_ff,
 		(ParamFloat<px4::params::FW_YR_I>) _param_fw_yr_i,
 		(ParamFloat<px4::params::FW_YR_IMAX>) _param_fw_yr_imax,
 		(ParamFloat<px4::params::FW_YR_P>) _param_fw_yr_p,
-		(ParamFloat<px4::params::FW_YR_D>) _param_fw_yr_d,
 
 		(ParamFloat<px4::params::TRIM_PITCH>) _param_trim_pitch,
 		(ParamFloat<px4::params::TRIM_ROLL>) _param_trim_roll,
