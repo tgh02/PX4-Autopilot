@@ -56,7 +56,7 @@ public:
 	 * @param I 3D vector of integral gains
 	 * @param D 3D vector of derivative gains
 	 */
-	void setGains(const matrix::Vector3f &P, const matrix::Vector3f &I, const matrix::Vector3f &D);
+	void setGains(const matrix::Vector3f &P, const matrix::Vector3f &I);
 
 	/**
 	 * Set the mximum absolute value of the integrator for all axes
@@ -106,7 +106,6 @@ private:
 	// Gains
 	matrix::Vector3f _gain_p; ///< rate control proportional gain for all axes x, y, z
 	matrix::Vector3f _gain_i; ///< rate control integral gain
-	matrix::Vector3f _gain_d; ///< rate control derivative gain
 	matrix::Vector3f _lim_int; ///< integrator term maximum absolute value
 	matrix::Vector3f _gain_ff; ///< direct rate to torque feed forward gain only useful for helicopters
 
